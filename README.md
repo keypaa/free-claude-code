@@ -83,7 +83,7 @@ See [NVIDIA NIM provider setup](#nvidia-nim-provider).
 ### 4. Install The Proxy
 
 ```bash
-uv tool install --force git+https://github.com/Alishahryar1/free-claude-code.git
+uv tool install --force git+https://github.com/keypaa/free-claude-code.git
 ```
 
 Use the same command to update to the latest version.
@@ -241,7 +241,31 @@ Popular examples:
 
 Browse models at [Z.ai](https://z.ai).
 
-### 11. Mix Providers By Model Tier
+### 11. [Fireworks](https://fireworks.ai/)
+
+Get an API key at [fireworks.ai/account/api-keys](https://fireworks.ai/account/api-keys).
+
+In the Admin UI, paste it into `FIREWORKS_API_KEY`, then set `MODEL` to a Fireworks model slug prefixed with `fireworks/`.
+
+Popular examples:
+
+- `fireworks/accounts/fireworks/models/llama-v3-8b`
+- `fireworks/accounts/fireworks/models/llama-v3-70b-instruct`
+- `fireworks/accounts/fireworks/models/qwen2-72b-instruct`
+
+Browse models at [Fireworks](https://fireworks.ai/models).
+
+### 12. [LocalMaxxing](https://localmaxxing.com/)
+
+Get an API key from [localmaxxing.com](https://localmaxxing.com). In the Admin UI, paste it into `LOCALMAXXING_API_KEY` and set `LOCALMAXXING_BASE_URL` to your provider's base URL.
+
+Set `MODEL` to a LocalMaxxing model slug prefixed with `localmaxxing/`.
+
+For example: `localmaxxing/your-model-id`.
+
+Refer to LocalMaxxing documentation for available models and endpoints.
+
+### 13. Mix Providers By Model Tier
 
 Each model tier can use a different provider by setting `MODEL_OPUS`, `MODEL_SONNET`, and `MODEL_HAIKU` in the Admin UI. Leave a tier blank to inherit `MODEL`.
 
@@ -347,13 +371,13 @@ Voice notes work on Discord and Telegram after you extend your [proxy install](#
 
 ```bash
 # NVIDIA NIM transcription (Riva gRPC)
-uv tool install --force "free-claude-code[voice] @ git+https://github.com/Alishahryar1/free-claude-code.git"
+uv tool install --force "free-claude-code[voice] @ git+https://github.com/keypaa/free-claude-code.git"
 
 # Local Whisper (CPU or CUDA)
-uv tool install --force "free-claude-code[voice_local] @ git+https://github.com/Alishahryar1/free-claude-code.git"
+uv tool install --force "free-claude-code[voice_local] @ git+https://github.com/keypaa/free-claude-code.git"
 
 # Both backends
-uv tool install --force "free-claude-code[voice,voice_local] @ git+https://github.com/Alishahryar1/free-claude-code.git"
+uv tool install --force "free-claude-code[voice,voice_local] @ git+https://github.com/keypaa/free-claude-code.git"
 ```
 
 For **cuda** local Whisper, add `--torch-backend cu130` to the `voice_local` install command. Restart `fcc-server` after reinstalling.
@@ -398,7 +422,7 @@ free-claude-code/
 Use this path if you are developing or want to run directly from a checkout:
 
 ```bash
-git clone https://github.com/Alishahryar1/free-claude-code.git
+git clone https://github.com/keypaa/free-claude-code.git
 cd free-claude-code
 uv run uvicorn server:app --host 0.0.0.0 --port 8082
 ```
