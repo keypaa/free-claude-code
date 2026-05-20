@@ -156,6 +156,17 @@ PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
         proxy_attr="fireworks_proxy",
         capabilities=("chat", "streaming", "tools", "thinking", "rate_limit"),
     ),
+    "localmaxxing": ProviderDescriptor(
+        provider_id="localmaxxing",
+        transport_type="openai_chat",
+        credential_env="LOCALMAXXING_API_KEY",
+        credential_url="https://localmaxxing.com",
+        credential_attr="localmaxxing_api_key",
+        default_base_url=None,
+        base_url_attr="localmaxxing_base_url",
+        proxy_attr="localmaxxing_proxy",
+        capabilities=("chat", "streaming", "tools", "thinking", "rate_limit"),
+    ),
 }
 
 # Order matches docs / historical error text; must match PROVIDER_CATALOG keys.

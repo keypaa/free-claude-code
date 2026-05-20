@@ -98,6 +98,12 @@ def _create_fireworks(config: ProviderConfig, _settings: Settings) -> BaseProvid
     return FireworksProvider(config)
 
 
+def _create_localmaxxing(config: ProviderConfig, _settings: Settings) -> BaseProvider:
+    from providers.localmaxxing import LocalMaxxingProvider
+
+    return LocalMaxxingProvider(config)
+
+
 PROVIDER_FACTORIES: dict[str, ProviderFactory] = {
     "nvidia_nim": _create_nvidia_nim,
     "open_router": _create_open_router,
@@ -110,6 +116,7 @@ PROVIDER_FACTORIES: dict[str, ProviderFactory] = {
     "opencode": _create_opencode,
     "zai": _create_zai,
     "fireworks": _create_fireworks,
+    "localmaxxing": _create_localmaxxing,
 }
 
 if set(PROVIDER_DESCRIPTORS) != set(SUPPORTED_PROVIDER_IDS) or set(
