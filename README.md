@@ -401,6 +401,15 @@ Important pieces:
 - The proxy normalizes thinking blocks, tool calls, token usage metadata, and provider errors into the shape Claude Code expects.
 - Request optimizations answer trivial Claude Code probes locally to save latency and quota.
 
+## Web Search and Fetch
+
+Free Claude Code can locally execute Anthropic's `web_search` and `web_fetch` server tools when using providers that do not support them natively. This is disabled by default for security reasons (outbound HTTP from the proxy).
+
+- Set `ENABLE_WEB_SERVER_TOOLS=true` in the Admin UI or via environment variable.
+- For OpenAI Chat compatible upstreams (NVIDIA NIM, OpenCode, Z.ai), listing these tools in a request automatically triggers local execution — no need to manually force them.
+- The local `web_search` uses DuckDuckGo Lite; `web_fetch` respects the egress policy (`WEB_FETCH_ALLOW_PRIVATE_NETWORKS` defaults to false) to prevent SSRF.
+- See the Admin UI for additional settings like `WEB_FETCH_ALLOWED_SCHEMES`.
+
 ## Development
 
 ### 1. Project Structure

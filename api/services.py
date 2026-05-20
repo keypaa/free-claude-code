@@ -26,6 +26,8 @@ from .web_tools.egress import WebFetchEgressPolicy
 from .web_tools.request import (
     is_web_server_tool_request,
     openai_chat_upstream_server_tool_error,
+    is_anthropic_server_tool_definition,
+    forced_server_tool_name,
 )
 from .web_tools.streaming import stream_web_server_tool_response
 
@@ -105,6 +107,20 @@ class ClaudeProxyService:
             _require_non_empty_messages(request_data.messages)
 
             routed = self._model_router.resolve_messages_request(request_data)
+
+            # Auto-force Anthropic server tools for OpenAI Chat upstreams when local web tools are enabled
+            if (
+                routed.resolved.provider_id in _OPENAI_CHAT_UPSTREAM_IDS
+                and self._settings.enable_web_server_tools
+                and forced_server_tool_name(routed.request) is None
+                and any(is_anthropic_server_tool_definition(t) for t in (routed.request.tools or []))
+            ):
+                for tool in routed.request.tools:
+                    if is_anthropic_server_tool_definition(tool):
+                        routed.request.tool_choice = {"type": "tool", "name": tool.name}
+                        logger.info("Auto-forced Anthropic server tool", tool_name=tool.name)
+                        break
+
             if routed.resolved.provider_id in _OPENAI_CHAT_UPSTREAM_IDS:
                 tool_err = openai_chat_upstream_server_tool_error(
                     routed.request,
