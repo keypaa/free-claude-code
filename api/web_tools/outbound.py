@@ -188,7 +188,11 @@ LANGSEARCH_URL = "https://api.langsearch.com/v1/web-search"
 
 
 async def _run_langsearch(query: str, api_key: str) -> list[dict[str, str]] | None:
-    """Search via LangSearch API. Returns None on failure."""
+    """Search via LangSearch API. Returns None on failure.
+
+    Note: count and summary params are intentionally omitted — they trigger
+    a server-side 500 error on the LangSearch API.
+    """
 
     try:
         async with httpx.AsyncClient(
@@ -200,11 +204,13 @@ async def _run_langsearch(query: str, api_key: str) -> list[dict[str, str]] | No
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
                 },
-                json={"query": query, "count": _MAX_SEARCH_RESULTS, "summary": False},
+                json={"query": query},
             )
             resp.raise_for_status()
-            data = resp.json()
-        pages = (data.get("webPages") or {}).get("value") or []
+            body = resp.json()
+        # LangSearch wraps results under body["data"]["webPages"]["value"]
+        top_data = body.get("data") or {}
+        pages = (top_data.get("webPages") or {}).get("value") or []
         return [
             {"title": p.get("name", ""), "url": p.get("url", "")}
             for p in pages
@@ -215,6 +221,42 @@ async def _run_langsearch(query: str, api_key: str) -> list[dict[str, str]] | No
         return None
 
 
+_DDG_SEARCH_URL = "https://html.duckduckgo.com/html/"
+
+
+async def _run_duckduckgo(query: str) -> list[dict[str, str]]:
+    """Search via DuckDuckGo HTML (POST). Falls back to lite (POST) if html fails."""
+    urls = [
+        "https://html.duckduckgo.com/html/",
+        "https://lite.duckduckgo.com/lite/",
+    ]
+    for url in urls:
+        try:
+            async with (
+                httpx.AsyncClient(
+                    timeout=_REQUEST_TIMEOUT_S,
+                    follow_redirects=True,
+                    headers=_WEB_TOOL_HTTP_HEADERS,
+                ) as client,
+                client.stream("POST", url, data={"q": query}) as response,
+            ):
+                response.raise_for_status()
+                body_bytes = await _read_response_body_capped(
+                    response, constants._MAX_WEB_FETCH_RESPONSE_BYTES
+                )
+            text = body_bytes.decode("utf-8", errors="replace")
+            from .parsers import SearchResultParser
+
+            parser = SearchResultParser()
+            parser.feed(text)
+            results = parser.results[:_MAX_SEARCH_RESULTS]
+            if results:
+                return results
+        except Exception:
+            logger.warning("duckduckgo_failure url={}", url)
+    return []
+
+
 async def _run_web_search(
     query: str, api_key: str | None = None
 ) -> list[dict[str, str]]:
@@ -223,28 +265,7 @@ async def _run_web_search(
         if results is not None:
             return results
 
-    async with (
-        httpx.AsyncClient(
-            timeout=_REQUEST_TIMEOUT_S,
-            follow_redirects=True,
-            headers=_WEB_TOOL_HTTP_HEADERS,
-        ) as client,
-        client.stream(
-            "GET",
-            "https://lite.duckduckgo.com/lite/",
-            params={"q": query},
-        ) as response,
-    ):
-        response.raise_for_status()
-        body_bytes = await _read_response_body_capped(
-            response, constants._MAX_WEB_FETCH_RESPONSE_BYTES
-        )
-    text = body_bytes.decode("utf-8", errors="replace")
-    from .parsers import SearchResultParser
-
-    parser = SearchResultParser()
-    parser.feed(text)
-    return parser.results[:_MAX_SEARCH_RESULTS]
+    return await _run_duckduckgo(query)
 
 
 async def _run_web_fetch(url: str, egress: WebFetchEgressPolicy) -> dict[str, str]:
