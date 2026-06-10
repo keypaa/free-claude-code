@@ -105,6 +105,7 @@ class OpenAIChatTransport(BaseProvider):
         provider_name: str,
         base_url: str,
         api_key: str,
+        http_client: httpx.AsyncClient | None = None,
     ):
         super().__init__(config)
         self._provider_name = provider_name
@@ -116,8 +117,7 @@ class OpenAIChatTransport(BaseProvider):
             rate_window=config.rate_window,
             max_concurrency=config.max_concurrency,
         )
-        http_client = None
-        if config.proxy:
+        if http_client is None and config.proxy:
             http_client = httpx.AsyncClient(
                 proxy=config.proxy,
                 timeout=httpx.Timeout(

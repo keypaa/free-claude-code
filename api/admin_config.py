@@ -354,6 +354,15 @@ FIELDS: tuple[ConfigFieldSpec, ...] = (
         advanced=True,
     ),
     ConfigFieldSpec(
+        "OPENCODE_FREE_PROXY",
+        "OpenCode Free Proxy",
+        "providers",
+        "secret",
+        settings_attr="opencode_free_proxy",
+        secret=True,
+        advanced=True,
+    ),
+    ConfigFieldSpec(
         "OPENCODE_GO_PROXY",
         "OpenCode Go Proxy",
         "providers",
@@ -1254,16 +1263,30 @@ def provider_config_status(
     statuses: list[dict[str, Any]] = []
     for provider_id, descriptor in PROVIDER_CATALOG.items():
         if descriptor.credential_env is None:
-            base_url = ""
             if descriptor.base_url_attr is not None:
-                base_url = _value_for_settings_attr(state, descriptor.base_url_attr)
+                base_url = ""
+                if descriptor.base_url_attr is not None:
+                    base_url = _value_for_settings_attr(state, descriptor.base_url_attr)
+                statuses.append(
+                    {
+                        "provider_id": provider_id,
+                        "kind": "local",
+                        "status": "missing_url" if not base_url.strip() else "unknown",
+                        "label": "Missing URL"
+                        if not base_url.strip()
+                        else "Not checked",
+                        "base_url": base_url or descriptor.default_base_url or "",
+                    }
+                )
+                continue
+
             statuses.append(
                 {
                     "provider_id": provider_id,
-                    "kind": "local",
-                    "status": "missing_url" if not base_url.strip() else "unknown",
-                    "label": "Missing URL" if not base_url.strip() else "Not checked",
-                    "base_url": base_url or descriptor.default_base_url or "",
+                    "kind": "remote",
+                    "status": "configured",
+                    "label": "Configured",
+                    "credential_env": "",
                 }
             )
             continue

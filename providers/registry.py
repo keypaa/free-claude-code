@@ -100,6 +100,12 @@ def _create_opencode(config: ProviderConfig, _settings: Settings) -> BaseProvide
     return OpenCodeProvider(config)
 
 
+def _create_opencode_free(config: ProviderConfig, _settings: Settings) -> BaseProvider:
+    from providers.opencode import OpenCodeProvider
+
+    return OpenCodeProvider(config, provider_name="OPENCODE_FREE")
+
+
 def _create_opencode_go(config: ProviderConfig, _settings: Settings) -> BaseProvider:
     from providers.opencode import OpenCodeProvider
 
@@ -144,6 +150,7 @@ PROVIDER_FACTORIES: dict[str, ProviderFactory] = {
     "mistral": _create_mistral,
     "mistral_codestral": _create_mistral_codestral,
     "opencode": _create_opencode,
+    "opencode_free": _create_opencode_free,
     "opencode_go": _create_opencode_go,
     "wafer": _create_wafer,
     "kimi": _create_kimi,

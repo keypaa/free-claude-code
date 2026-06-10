@@ -69,6 +69,7 @@ function providerName(providerId) {
     kimi: "Kimi",
     wafer: "Wafer",
     opencode: "OpenCode Zen",
+    opencode_free: "OpenCode Free",
     opencode_go: "OpenCode Go",
     zai: "Z.ai",
   };

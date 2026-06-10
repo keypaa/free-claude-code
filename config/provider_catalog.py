@@ -29,6 +29,7 @@ LMSTUDIO_DEFAULT_BASE = "http://localhost:1234/v1"
 LLAMACPP_DEFAULT_BASE = "http://localhost:8080/v1"
 OLLAMA_DEFAULT_BASE = "http://localhost:11434"
 OPENCODE_DEFAULT_BASE = "https://opencode.ai/zen/v1"
+OPENCODE_FREE_DEFAULT_BASE = OPENCODE_DEFAULT_BASE
 OPENCODE_GO_DEFAULT_BASE = "https://opencode.ai/zen/go/v1"
 # Z.ai Anthropic-compatible Messages API (not OpenAI Coding Plan chat completions).
 ZAI_DEFAULT_BASE = "https://api.z.ai/api/anthropic/v1"
@@ -122,6 +123,14 @@ PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
         credential_attr="opencode_api_key",
         default_base_url=OPENCODE_DEFAULT_BASE,
         proxy_attr="opencode_proxy",
+        capabilities=("chat", "streaming", "tools", "thinking", "rate_limit"),
+    ),
+    "opencode_free": ProviderDescriptor(
+        provider_id="opencode_free",
+        transport_type="openai_chat",
+        static_credential="free",
+        default_base_url=OPENCODE_FREE_DEFAULT_BASE,
+        proxy_attr="opencode_free_proxy",
         capabilities=("chat", "streaming", "tools", "thinking", "rate_limit"),
     ),
     "opencode_go": ProviderDescriptor(
