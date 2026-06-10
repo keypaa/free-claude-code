@@ -72,6 +72,8 @@ function providerName(providerId) {
     opencode_free: "OpenCode Free",
     opencode_go: "OpenCode Go",
     zai: "Z.ai",
+    fireworks: "Fireworks",
+    localmaxxing: "LocalMaxxing",
   };
   if (names[providerId]) return names[providerId];
   return providerId

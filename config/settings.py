@@ -114,6 +114,12 @@ class Settings(BaseSettings):
     # ==================== Cerebras Inference (OpenAI-compatible) ====================
     cerebras_api_key: str = Field(default="", validation_alias="CEREBRAS_API_KEY")
 
+    # ==================== LocalMaxxing Config ====================
+    localmaxxing_api_key: str = Field(default="", validation_alias="LOCALMAXXING_API_KEY")
+    localmaxxing_base_url: str = Field(
+        default="", validation_alias="LOCALMAXXING_BASE_URL"
+    )
+
     # ==================== Messaging Platform Selection ====================
     # Valid: "telegram" | "discord" | "none"
     messaging_platform: str = Field(
@@ -175,6 +181,7 @@ class Settings(BaseSettings):
     gemini_proxy: str = Field(default="", validation_alias="GEMINI_PROXY")
     groq_proxy: str = Field(default="", validation_alias="GROQ_PROXY")
     cerebras_proxy: str = Field(default="", validation_alias="CEREBRAS_PROXY")
+    localmaxxing_proxy: str = Field(default="", validation_alias="LOCALMAXXING_PROXY")
 
     # ==================== Provider Rate Limiting ====================
     provider_rate_limit: int = Field(default=40, validation_alias="PROVIDER_RATE_LIMIT")

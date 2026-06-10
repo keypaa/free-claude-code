@@ -70,7 +70,19 @@ irm "https://github.com/Alishahryar1/free-claude-code/blob/main/scripts/install.
 
 Review the installers at [scripts/install.sh](https://github.com/Alishahryar1/free-claude-code/blob/main/scripts/install.sh) and [scripts/install.ps1](https://github.com/Alishahryar1/free-claude-code/blob/main/scripts/install.ps1). Re-run these commands to update to the latest version.
 
-### 2. Start The Proxy
+Create a free NVIDIA NIM API key, then keep it ready for the Admin UI setup step.
+
+See [NVIDIA NIM provider setup](#nvidia-nim-provider).
+
+### 4. Install The Proxy
+
+```bash
+uv tool install --force git+https://github.com/keypaa/free-claude-code.git
+```
+
+Use the same command to update to the latest version.
+
+### 5. Start The Proxy
 
 ```bash
 fcc-server
@@ -277,34 +289,31 @@ Popular examples:
 
 Browse models at [Z.ai](https://z.ai).
 
-### 15. [LM Studio](https://lmstudio.ai/)
+### 11. [Fireworks](https://fireworks.ai/)
 
-Start LM Studio's local server and load a model. In the Admin UI, keep or update `LM_STUDIO_BASE_URL`, then set `MODEL` to the model identifier shown by LM Studio, prefixed with `lmstudio/`.
+Get an API key at [fireworks.ai/account/api-keys](https://fireworks.ai/account/api-keys).
 
-Prefer models with tool-use support for Claude Code workflows.
+In the Admin UI, paste it into `FIREWORKS_API_KEY`, then set `MODEL` to a Fireworks model slug prefixed with `fireworks/`.
 
-### 16. [llama.cpp](https://github.com/ggml-org/llama.cpp)
+Popular examples:
 
-Start `llama-server` with an Anthropic-compatible `/v1/messages` endpoint and enough context for Claude Code requests.
+- `fireworks/accounts/fireworks/models/llama-v3-8b`
+- `fireworks/accounts/fireworks/models/llama-v3-70b-instruct`
+- `fireworks/accounts/fireworks/models/qwen2-72b-instruct`
 
-In the Admin UI, keep or update `LLAMACPP_BASE_URL`, then set `MODEL` to the local model slug, prefixed with `llamacpp/`.
+Browse models at [Fireworks](https://fireworks.ai/models).
 
-For local coding models, context size matters. If llama.cpp returns HTTP 400 for normal Claude Code requests, increase `--ctx-size` and verify the model/server build supports the requested features.
+### 12. [LocalMaxxing](https://localmaxxing.com/)
 
-### 17. [Ollama](https://ollama.com/)
+Get an API key from [localmaxxing.com](https://localmaxxing.com). In the Admin UI, paste it into `LOCALMAXXING_API_KEY` and set `LOCALMAXXING_BASE_URL` to your provider's base URL.
 
-Run Ollama and pull a model:
+Set `MODEL` to a LocalMaxxing model slug prefixed with `localmaxxing/`.
 
-```bash
-ollama pull llama3.1
-ollama serve
-```
+For example: `localmaxxing/your-model-id`.
 
-In the Admin UI, keep or update `OLLAMA_BASE_URL`, then set `MODEL` to the same tag shown by `ollama list`, prefixed with `ollama/`.
+Refer to LocalMaxxing documentation for available models and endpoints.
 
-`OLLAMA_BASE_URL` is the Ollama server root; do not append `/v1`. Example model slugs include `ollama/llama3.1` and `ollama/llama3.1:8b`.
-
-### 18. Mix Providers By Model Tier
+### 13. Mix Providers By Model Tier
 
 Each model tier can use a different provider by setting `MODEL_OPUS`, `MODEL_SONNET`, and `MODEL_HAIKU` in the Admin UI. Leave a tier blank to inherit `MODEL`.
 
@@ -406,16 +415,13 @@ macOS/Linux:
 
 ```bash
 # NVIDIA NIM transcription (Riva gRPC)
-curl -fsSL "https://github.com/Alishahryar1/free-claude-code/blob/main/scripts/install.sh?raw=1" | sh -s -- --voice-nim
+uv tool install --force "free-claude-code[voice] @ git+https://github.com/keypaa/free-claude-code.git"
 
 # Local Whisper (CPU or CUDA)
-curl -fsSL "https://github.com/Alishahryar1/free-claude-code/blob/main/scripts/install.sh?raw=1" | sh -s -- --voice-local
+uv tool install --force "free-claude-code[voice_local] @ git+https://github.com/keypaa/free-claude-code.git"
 
 # Both backends
-curl -fsSL "https://github.com/Alishahryar1/free-claude-code/blob/main/scripts/install.sh?raw=1" | sh -s -- --voice-all
-
-# Local Whisper with CUDA
-curl -fsSL "https://github.com/Alishahryar1/free-claude-code/blob/main/scripts/install.sh?raw=1" | sh -s -- --voice-local --torch-backend cu130
+uv tool install --force "free-claude-code[voice,voice_local] @ git+https://github.com/keypaa/free-claude-code.git"
 ```
 
 Windows PowerShell:
@@ -455,6 +461,15 @@ Important pieces:
 - The proxy normalizes thinking blocks, tool calls, token usage metadata, and provider errors into the shape Claude Code expects.
 - Request optimizations answer trivial Claude Code probes locally to save latency and quota.
 
+## Web Search and Fetch
+
+Free Claude Code can locally execute Anthropic's `web_search` and `web_fetch` server tools when using providers that do not support them natively. This is disabled by default for security reasons (outbound HTTP from the proxy).
+
+- Set `ENABLE_WEB_SERVER_TOOLS=true` in the Admin UI or via environment variable.
+- For OpenAI Chat compatible upstreams (NVIDIA NIM, OpenCode, Z.ai), listing these tools in a request automatically triggers local execution — no need to manually force them.
+- The local `web_search` uses DuckDuckGo Lite; `web_fetch` respects the egress policy (`WEB_FETCH_ALLOW_PRIVATE_NETWORKS` defaults to false) to prevent SSRF.
+- See the Admin UI for additional settings like `WEB_FETCH_ALLOWED_SCHEMES`.
+
 ## Development
 
 ### 1. Project Structure
@@ -476,7 +491,7 @@ free-claude-code/
 Use this path if you are developing or want to run directly from a checkout:
 
 ```bash
-git clone https://github.com/Alishahryar1/free-claude-code.git
+git clone https://github.com/keypaa/free-claude-code.git
 cd free-claude-code
 uv run uvicorn server:app --host 0.0.0.0 --port 8082
 ```
