@@ -115,7 +115,9 @@ class Settings(BaseSettings):
     cerebras_api_key: str = Field(default="", validation_alias="CEREBRAS_API_KEY")
 
     # ==================== LocalMaxxing Config ====================
-    localmaxxing_api_key: str = Field(default="", validation_alias="LOCALMAXXING_API_KEY")
+    localmaxxing_api_key: str = Field(
+        default="", validation_alias="LOCALMAXXING_API_KEY"
+    )
     localmaxxing_base_url: str = Field(
         default="", validation_alias="LOCALMAXXING_BASE_URL"
     )
@@ -238,6 +240,8 @@ class Settings(BaseSettings):
     web_fetch_allow_private_networks: bool = Field(
         default=False, validation_alias="WEB_FETCH_ALLOW_PRIVATE_NETWORKS"
     )
+    # LangSearch API key for web_search backend (https://langsearch.com).
+    langsearch_api_key: str = Field(default="", validation_alias="LANGSEARCH_API_KEY")
 
     # ==================== Debug / diagnostic logging (avoid sensitive content) ====================
     # When false (default), API and SSE helpers log only metadata (counts, lengths, ids).

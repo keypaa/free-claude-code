@@ -43,6 +43,7 @@ async def stream_web_server_tool_response(
     *,
     web_fetch_egress: WebFetchEgressPolicy,
     verbose_client_errors: bool = False,
+    langsearch_api_key: str = "",
 ) -> AsyncIterator[str]:
     """Stream a minimal Anthropic-shaped turn for forced `web_search` / `web_fetch` (local fallback).
 
@@ -109,7 +110,7 @@ async def stream_web_server_tool_response(
     try:
         if tool_name == "web_search":
             query = str(tool_input["query"])
-            results = await outbound._run_web_search(query)
+            results = await outbound._run_web_search(query, api_key=langsearch_api_key)
             result_content: Any = [
                 {
                     "type": "web_search_result",

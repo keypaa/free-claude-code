@@ -3,13 +3,16 @@
 import json
 
 
-def test_auto_force_web_search_tool_on_openai_chat_upstream(
-    test_client, test_provider
-):
+def test_auto_force_web_search_tool_on_openai_chat_upstream(test_client, test_provider):
     """When ENABLE_WEB_SERVER_TOOLS=True, a request that lists web_search without forcing
     should automatically have tool_choice set to web_search for OpenAI Chat upstreams.
     """
-    from api.models.anthropic import MessagesRequest, Tool
+    from api.models.anthropic import (
+        ContentBlockText,
+        Message,
+        MessagesRequest,
+        Tool,
+    )
 
     settings = test_client.app.state.settings
     settings.enable_web_server_tools = True
@@ -17,10 +20,12 @@ def test_auto_force_web_search_tool_on_openai_chat_upstream(
     request = MessagesRequest(
         model="nvidia_nim/fake-model",
         messages=[
-            {
-                "role": "user",
-                "content": [{"type": "text", "text": "search the web for claude code"}],
-            }
+            Message(
+                role="user",
+                content=[
+                    ContentBlockText(type="text", text="search the web for claude code")
+                ],
+            )
         ],
         tools=[
             Tool(name="web_search", type="web_search_20250305"),
@@ -51,7 +56,10 @@ def test_auto_force_web_search_tool_on_openai_chat_upstream(
         b
         for b in data_blocks
         if b.get("type") == "content_block_start"
-        and b.get("content_block", {}).get("type") in ("web_search_tool_result", "web_fetch_tool_result")
+        and b.get("content_block", {}).get("type")
+        in ("web_search_tool_result", "web_fetch_tool_result")
     ]
     assert len(tool_use_events) >= 1, "Expected at least one server_tool_use event"
-    assert len(tool_result_events) >= 1, "Expected at least one web_search_tool_result event"
+    assert len(tool_result_events) >= 1, (
+        "Expected at least one web_search_tool_result event"
+    )

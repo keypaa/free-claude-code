@@ -24,10 +24,10 @@ from .models.responses import TokenCountResponse
 from .optimization_handlers import try_optimizations
 from .web_tools.egress import WebFetchEgressPolicy
 from .web_tools.request import (
+    forced_server_tool_name,
+    is_anthropic_server_tool_definition,
     is_web_server_tool_request,
     openai_chat_upstream_server_tool_error,
-    is_anthropic_server_tool_definition,
-    forced_server_tool_name,
 )
 from .web_tools.streaming import stream_web_server_tool_response
 
@@ -113,12 +113,17 @@ class ClaudeProxyService:
                 routed.resolved.provider_id in _OPENAI_CHAT_UPSTREAM_IDS
                 and self._settings.enable_web_server_tools
                 and forced_server_tool_name(routed.request) is None
-                and any(is_anthropic_server_tool_definition(t) for t in (routed.request.tools or []))
+                and any(
+                    is_anthropic_server_tool_definition(t)
+                    for t in (routed.request.tools or [])
+                )
             ):
-                for tool in routed.request.tools:
+                for tool in routed.request.tools or []:
                     if is_anthropic_server_tool_definition(tool):
                         routed.request.tool_choice = {"type": "tool", "name": tool.name}
-                        logger.info("Auto-forced Anthropic server tool", tool_name=tool.name)
+                        logger.info(
+                            "Auto-forced Anthropic server tool", tool_name=tool.name
+                        )
                         break
 
             if routed.resolved.provider_id in _OPENAI_CHAT_UPSTREAM_IDS:
@@ -151,6 +156,7 @@ class ClaudeProxyService:
                         input_tokens=input_tokens,
                         web_fetch_egress=egress,
                         verbose_client_errors=self._settings.log_api_error_tracebacks,
+                        langsearch_api_key=self._settings.langsearch_api_key,
                     ),
                 )
 

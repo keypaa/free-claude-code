@@ -299,7 +299,7 @@ async def test_run_web_fetch_excess_redirects_raises():
 
 @pytest.mark.asyncio
 async def test_streams_web_search_server_tool_result(monkeypatch):
-    async def fake_search(query: str) -> list[dict[str, str]]:
+    async def fake_search(query: str, api_key: str | None = None) -> list[dict[str, str]]:
         assert query == "DeepSeek V4 model release 2026"
         return [{"title": "DeepSeek V4 Released", "url": "https://example.com/v4"}]
 

@@ -758,6 +758,13 @@ FIELDS: tuple[ConfigFieldSpec, ...] = (
         default="false",
     ),
     ConfigFieldSpec(
+        "LANGSEARCH_API_KEY",
+        "LangSearch API Key",
+        "web_tools",
+        settings_attr="langsearch_api_key",
+        default="",
+    ),
+    ConfigFieldSpec(
         "DEBUG_PLATFORM_EDITS",
         "Debug Platform Edits",
         "diagnostics",

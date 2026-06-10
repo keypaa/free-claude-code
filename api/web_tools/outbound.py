@@ -27,7 +27,7 @@ from .egress import (
     WebFetchEgressViolation,
     get_validated_stream_addrinfos_for_egress,
 )
-from .parsers import HTMLTextParser, SearchResultParser
+from .parsers import HTMLTextParser
 
 
 def _safe_public_host_for_logs(url: str) -> str:
@@ -184,7 +184,45 @@ async def _drain_aiohttp_body_capped(
             break
 
 
-async def _run_web_search(query: str) -> list[dict[str, str]]:
+LANGSEARCH_URL = "https://api.langsearch.com/v1/web-search"
+
+
+async def _run_langsearch(query: str, api_key: str) -> list[dict[str, str]] | None:
+    """Search via LangSearch API. Returns None on failure."""
+
+    try:
+        async with httpx.AsyncClient(
+            timeout=_REQUEST_TIMEOUT_S,
+        ) as client:
+            resp = await client.post(
+                LANGSEARCH_URL,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={"query": query, "count": _MAX_SEARCH_RESULTS, "summary": False},
+            )
+            resp.raise_for_status()
+            data = resp.json()
+        pages = (data.get("webPages") or {}).get("value") or []
+        return [
+            {"title": p.get("name", ""), "url": p.get("url", "")}
+            for p in pages
+            if p.get("name") and p.get("url")
+        ][:_MAX_SEARCH_RESULTS]
+    except Exception:
+        logger.warning("langsearch_api_failure", exc_info=True)
+        return None
+
+
+async def _run_web_search(
+    query: str, api_key: str | None = None
+) -> list[dict[str, str]]:
+    if api_key:
+        results = await _run_langsearch(query, api_key)
+        if results is not None:
+            return results
+
     async with (
         httpx.AsyncClient(
             timeout=_REQUEST_TIMEOUT_S,
@@ -202,6 +240,8 @@ async def _run_web_search(query: str) -> list[dict[str, str]]:
             response, constants._MAX_WEB_FETCH_RESPONSE_BYTES
         )
     text = body_bytes.decode("utf-8", errors="replace")
+    from .parsers import SearchResultParser
+
     parser = SearchResultParser()
     parser.feed(text)
     return parser.results[:_MAX_SEARCH_RESULTS]
