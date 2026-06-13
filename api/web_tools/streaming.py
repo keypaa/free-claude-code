@@ -83,7 +83,15 @@ async def stream_web_server_tool_response(
                 "type": "message",
                 "role": "assistant",
                 "content": [],
-                "model": request.model,
+                # Use the original client-facing model so Claude Code can match the session
+                # model on resume. Fall back to ``request.model`` when ``original_model``
+                # is absent (test mocks, legacy code paths).
+                "model": (
+                    om
+                    if isinstance(om := getattr(request, "original_model", None), str)
+                    and om
+                    else request.model
+                ),
                 "stop_reason": None,
                 "stop_sequence": None,
                 "usage": {"input_tokens": input_tokens, "output_tokens": 1},

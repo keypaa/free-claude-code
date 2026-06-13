@@ -36,7 +36,9 @@ TokenCounter = Callable[[list[Any], str | list[Any] | None, list[Any] | None], i
 ProviderGetter = Callable[[str], BaseProvider]
 
 # Providers that use ``/chat/completions`` + Anthropic-to-OpenAI conversion (not native Messages).
-_OPENAI_CHAT_UPSTREAM_IDS = frozenset({"nvidia_nim", "opencode", "opencode_free", "opencode_go"})
+_OPENAI_CHAT_UPSTREAM_IDS = frozenset(
+    {"nvidia_nim", "opencode", "opencode_free", "opencode_go"}
+)
 
 
 def anthropic_sse_streaming_response(
@@ -107,6 +109,11 @@ class ClaudeProxyService:
             _require_non_empty_messages(request_data.messages)
 
             routed = self._model_router.resolve_messages_request(request_data)
+
+            # Preserve the original model the client sent for SSE responses (e.g. gateway-encoded
+            # ``anthropic/provider/model``). Without it, the session records the bare provider model
+            # name and Claude Code cannot match it on resume.
+            routed.request.original_model = routed.resolved.original_model
 
             # Auto-force Anthropic server tools for OpenAI Chat upstreams when local web tools are enabled
             if (

@@ -630,9 +630,14 @@ class OpenAIChatTransport(BaseProvider):
         message_id = f"msg_{uuid.uuid4()}"
 
         def new_sse_builder() -> SSEBuilder:
+            # Use the original client-facing model for the SSE response so Claude Code
+            # can match the session model on resume. Fall back to ``request.model`` when
+            # ``original_model`` is absent (test mocks, legacy code paths).
+            _model = getattr(request, "original_model", None)
+            _model = _model if isinstance(_model, str) and _model else request.model
             return SSEBuilder(
                 message_id,
-                request.model,
+                _model,
                 input_tokens,
                 log_raw_events=self._config.log_raw_sse_events,
             )
