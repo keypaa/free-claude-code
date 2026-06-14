@@ -14,6 +14,7 @@ from loguru import logger
 from config.settings import Settings
 from core.anthropic import get_token_count, get_user_facing_error_message
 from core.anthropic.sse import ANTHROPIC_SSE_RESPONSE_HEADERS
+from core.anthropic.sse_collector import collect_sse_to_message
 from core.trace import api_messages_request_snapshot, trace_event, traced_async_stream
 from providers.base import BaseProvider
 from providers.exceptions import InvalidRequestError, ProviderError
@@ -103,7 +104,12 @@ class ClaudeProxyService:
         self._model_router = model_router or ModelRouter(settings)
         self._token_counter = token_counter
 
-    def create_message(self, request_data: MessagesRequest) -> object:
+    async def create_message(
+        self,
+        request_data: MessagesRequest,
+        *,
+        stream_response: bool = True,
+    ) -> object:
         """Create a message response or streaming response."""
         try:
             _require_non_empty_messages(request_data.messages)
@@ -157,15 +163,16 @@ class ClaudeProxyService:
                     allow_private_network_targets=self._settings.web_fetch_allow_private_networks,
                     allowed_schemes=self._settings.web_fetch_allowed_scheme_set(),
                 )
-                return anthropic_sse_streaming_response(
-                    stream_web_server_tool_response(
-                        routed.request,
-                        input_tokens=input_tokens,
-                        web_fetch_egress=egress,
-                        verbose_client_errors=self._settings.log_api_error_tracebacks,
-                        langsearch_api_key=self._settings.langsearch_api_key,
-                    ),
+                events = stream_web_server_tool_response(
+                    routed.request,
+                    input_tokens=input_tokens,
+                    web_fetch_egress=egress,
+                    verbose_client_errors=self._settings.log_api_error_tracebacks,
+                    langsearch_api_key=self._settings.langsearch_api_key,
                 )
+                if stream_response:
+                    return anthropic_sse_streaming_response(events)
+                return await collect_sse_to_message(events)
 
             optimized = try_optimizations(routed.request, self._settings)
             if optimized is not None:
@@ -234,7 +241,9 @@ class ClaudeProxyService:
                         "gateway_model": routed.request.model,
                     },
                 )
-                return anthropic_sse_streaming_response(streamed)
+                if stream_response:
+                    return anthropic_sse_streaming_response(streamed)
+                return await collect_sse_to_message(streamed)
 
         except ProviderError:
             raise

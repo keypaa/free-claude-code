@@ -163,14 +163,29 @@ def _build_models_list_response(
 # =============================================================================
 # Routes
 # =============================================================================
+def _is_streaming_request(request: Request) -> bool:
+    """Return ``True`` when the client expects an SSE streaming response.
+
+    Detection order:
+    1. ``?stream=true`` query parameter (Anthropic SDK convention).
+    2. ``Accept: text/event-stream`` header (standard HTTP/SSE).
+    """
+    if request.query_params.get("stream", "").lower() == "true":
+        return True
+    accept = request.headers.get("accept", "").lower()
+    return "text/event-stream" in accept
+
+
 @router.post("/v1/messages")
 async def create_message(
     request_data: MessagesRequest,
+    request: Request,
     service: ClaudeProxyService = Depends(get_proxy_service),
     _auth=Depends(require_api_key),
 ):
-    """Create a message (always streaming)."""
-    return service.create_message(request_data)
+    """Create a message (streaming SSE or JSON)."""
+    is_streaming = _is_streaming_request(request)
+    return await service.create_message(request_data, stream_response=is_streaming)
 
 
 @router.api_route("/v1/messages", methods=["HEAD", "OPTIONS"])
